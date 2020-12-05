@@ -20,21 +20,29 @@
 ## Implement logic to integrate all 500 S&P 500 stocks
 
 import os
+import pandas as pd
 import robin_stocks as rs
 
 # pull credentials from environment
 robin_user = os.environ.get('robinhood_username')
 robin_pass = os.environ.get('robinhood_password')
 
+# login to Robinhood
 rs.login(username=robin_user,
          password=robin_pass,
          expiresIn=86400,
          by_sms=True)
 
-# run after hours to get closing price
-price = rs.stocks.get_latest_price(inputSymbols='MA', includeExtendedHours=False)
-mastercard_price = float(price[0])
+# strategy parameters
+profit_target = 0.01
+stop_loss = -0.01
 
+# get list of S&P 500 tickers
+table = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
+df = table[0]
+sp500_tickers = df['Symbol'].tolist()
+
+# run once after hours
 # get 52 week high
 high_52_weeks = rs.stocks.get_fundamentals(inputSymbols='MA', info='high_52_weeks')
 mastercard_high_52_weeks = float(high_52_weeks[0])
@@ -46,10 +54,11 @@ mastercard_high_day = float(high_day[0])
 # if day high within 99% of 52 week high then place buy order
 if mastercard_high_day >= 0.99*mastercard_high_52_weeks:
     rs.orders.order_buy_fractional_by_price(symbol='MA',
-    amountInDollars=1,
-    timeInForce='gtc',
-    extendedHours=False)
+                                            amountInDollars=1,
+                                            timeInForce='gtc',
+                                            extendedHours=False)
 
+# run continuously during market hours
 # build current portfolio holdings
 holdings = rs.account.build_holdings()
 
@@ -59,13 +68,15 @@ holdings = rs.account.build_holdings()
 for ticker in holdings.keys():
     percent_change = float(holdings[ticker]['percent_change'][0])
     quantity = float(holdings[ticker]['quantity'][0])
-    if percent_change >= 0.01:
+    if percent_change >= profit_target:
         rs.orders.order_sell_fractional_by_quantity(symbol=ticker,
-        quantity=quantity,
-        timeInForce='gtc',
-        extendedHours=False)
-    elif percent_change <= -0.01:
+                                                    quantity=quantity,
+                                                    timeInForce='gtc',
+                                                    extendedHours=False)
+        holdings.pop(ticker) # remove ticker from holdings
+    elif percent_change <= stop_loss:
         rs.orders.order_sell_fractional_by_quantity(symbol=ticker,
-        quantity=quantity,
-        timeInForce='gtc',
-        extendedHours=False)
+                                                    quantity=quantity,
+                                                    timeInForce='gtc',
+                                                    extendedHours=False)
+        holdings.pop(ticker) # remove ticker from holdings
