@@ -10,3 +10,4 @@ dependencies:
     - robin_stocks==1.5.3
     - ipykernel==5.3.4
     - lxml==4.6.2
+    - matplotlib==3.3.3
