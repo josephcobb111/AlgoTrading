@@ -1,0 +1,10 @@
+name: algotrading
+channels:
+  - default
+dependencies:
+  - python=3.6
+  - pip
+  - pip:
+    - pandas==1.1.4
+    - numpy==1.19.4
+    - robin_stocks==1.5.3
