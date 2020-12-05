@@ -56,16 +56,16 @@ holdings = rs.account.build_holdings()
 # for each holding:
 # close positions at 1% profit
 # close positions at 1% loss
-for key in holdings.keys():
-    percent_change = float(holdings[key]['percent_change'][0])
-    quantity = float(holdings[key]['quantity'][0])
+for ticker in holdings.keys():
+    percent_change = float(holdings[ticker]['percent_change'][0])
+    quantity = float(holdings[ticker]['quantity'][0])
     if percent_change >= 0.01:
-        rs.orders.order_sell_fractional_by_quantity(symbol='MA',
+        rs.orders.order_sell_fractional_by_quantity(symbol=ticker,
         quantity=quantity,
         timeInForce='gtc',
         extendedHours=False)
     elif percent_change <= -0.01:
-        rs.orders.order_sell_fractional_by_quantity(symbol='MA',
+        rs.orders.order_sell_fractional_by_quantity(symbol=ticker,
         quantity=quantity,
         timeInForce='gtc',
         extendedHours=False)
