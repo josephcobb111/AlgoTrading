@@ -4,3 +4,5 @@ robin_stocks==1.5.3
 ipykernel==5.3.4
 lxml==4.6.2
 matplotlib==3.3.3
+yfinance==0.1.55
+pandas_datareader==0.9.0
