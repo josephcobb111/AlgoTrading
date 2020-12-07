@@ -71,19 +71,25 @@ logger.addHandler(ch)
 
 ### some parameters ###
 ticker = 'TTD'
-trail_stop_loss_type = 'percentage'
-trail_stop_loss_amount = 0.03
+take_profit = 0.015 # as a percentage
+stop_loss = -0.005 # as a percentage
 cash_allocation = 0.1
-proximity_to_new_high_52_weeks = 0.99
+proximity_to_new_high_52_weeks = 0.999 # right at 52 week high
 #######################
 
 while True:
     # login to Robinhood
-    robinhood_login()
-    logger.info('Robinhood login successful.')
+    try:
+        robinhood_login()
+        logger.info('Robinhood login successful.')
+    except:
+        logger.info('Robinhood login failed.')
 
     # get next market open and close times
-    market_opens, market_closes = get_next_market_open_hours()
+    try:
+        market_opens, market_closes = get_next_market_open_hours()
+    except:
+        logger.info('Get market times failed.')
     current_time = parser.parse(datetime.now(timezone.utc).isoformat())
 
     # while market is open, execute trading strategy
@@ -91,8 +97,8 @@ while True:
         # get current portfolio and uninvested cash values
         total_portfolio_value = float(rs.profiles.load_portfolio_profile()['equity'])
         uninvested_cash = float(rs.account.load_phoenix_account()['uninvested_cash']['amount'])
-        # get high for day and 52 week high prices
-        high_today = float(rs.stocks.get_fundamentals(inputSymbols=ticker,info='high')[0])
+        # get latest price and 52 week high prices
+        latest_price = float(rs.stocks.get_latest_price(inputSymbols=ticker)[0])
         high_52_weeks = float(rs.stocks.get_fundamentals(inputSymbols=ticker,info='high_52_weeks')[0])
         # if <10% of portfolio is cash, do nothing
         if uninvested_cash/total_portfolio_value < cash_allocation:
@@ -100,26 +106,35 @@ while True:
             pass
         else:
             # if day high within 99% of 52 week high then place buy order
-            if (high_today/high_52_weeks) >= proximity_to_new_high_52_weeks:
+            if (latest_price/high_52_weeks) >= proximity_to_new_high_52_weeks:
                 rs.orders.order_buy_fractional_by_price(symbol=ticker,
                                                         amountInDollars=uninvested_cash,
                                                         timeInForce='gfd',
                                                         extendedHours=False)
                 logger.info('Submit buy order. Ticker: {} Amount: {}'.format(ticker, uninvested_cash))
 
-            # build current portfolio holdings
-            holdings = rs.account.build_holdings()
-            quantity = float(holdings[ticker]['quantity'][0])
-            rs.orders.order_trailing_stop(symbol=ticker,
-                                          quantity=quantity,
-                                          side='sell',
-                                          trailAmount=trail_stop_loss_amount,
-                                          trailType=trail_stop_loss_type,
-                                          timeInForce='gtc',
-                                          extendedHours=False)
-
-            logger.info('Submit trailing stop sell order. Ticker: {} Type: {} Amount: {}'.format(
-                ticker, trail_stop_loss_type, trail_stop_loss_amount))
+        # build current portfolio holdings
+        holdings = rs.account.build_holdings()
+        for symbol in holdings.keys():
+            percentchange = float(holdings[symbol]['percent_change'])
+            # take profit
+            if percentchange >= take_profit:
+                quantity = float(holdings[symbol]['quantity'][0])
+                rs.orders.order_sell_fractional_by_quantity(symbol=symbol,
+                                                            quantity=quantity,
+                                                            timeInForce='gtc',
+                                                            extendedHours=False)
+                logger.info('Submit take profit sell order. Ticker: {} Percent Gain: {}'.format(
+                symbol, percentchange))
+            # stop loss
+            elif percentchange <= stop_loss:
+                quantity = float(holdings[symbol]['quantity'][0])
+                rs.orders.order_sell_fractional_by_quantity(symbol=symbol,
+                                                            quantity=quantity,
+                                                            timeInForce='gtc',
+                                                            extendedHours=False)
+                logger.info('Submit stop loss profit sell order. Ticker: {} Percent Loss: {}'.format(
+                symbol, percentchange))
         # delay to prevent overwhelming Robinhood API
         sleep(15)
 
