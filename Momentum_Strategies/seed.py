@@ -17,7 +17,7 @@
 import os
 import pandas as pd
 import numpy as np
-from datetime import datetime, timezone, timedelta 
+from datetime import datetime, timezone, timedelta
 from dateutil import parser
 from time import sleep
 import logging
@@ -32,10 +32,16 @@ def robinhood_login(robin_user=os.environ.get('robinhood_username'), robin_pass=
 
 
 def get_next_market_open_hours(market='XNYS'):
-    """Get next market open hours. Default market is NYSE."""
-    market_open_dict = rs.markets.get_market_next_open_hours(market=market)
-    market_opens = parser.parse(market_open_dict['opens_at'])
-    market_closes = parser.parse(market_open_dict['closes_at'])
+    """Get next market open hours. Default market is NYSE for US market hours."""
+    today_market_open_dict = rs.markets.get_market_today_hours(market=market)
+    if today_market_open_dict['is_open']:
+        market_opens = parser.parse(today_market_open_dict['opens_at'])
+        market_closes = parser.parse(today_market_open_dict['closes_at'])
+    else:
+
+        next_market_open_dict = rs.markets.get_market_next_open_hours(market=market)
+        market_opens = parser.parse(next_market_open_dict['opens_at'])
+        market_closes = parser.parse(next_market_open_dict['closes_at'])
     return market_opens, market_closes
 
 
@@ -66,7 +72,7 @@ logger.addHandler(ch)
 ### some parameters ###
 ticker = 'TTD'
 trail_stop_loss_type = 'percentage'
-trail_stop_loss_amount = 0.01
+trail_stop_loss_amount = 0.03
 cash_allocation = 0.1
 proximity_to_new_high_52_weeks = 0.99
 #######################
@@ -74,6 +80,7 @@ proximity_to_new_high_52_weeks = 0.99
 while True:
     # login to Robinhood
     robinhood_login()
+    logger.info('Robinhood login successful.')
 
     # get next market open and close times
     market_opens, market_closes = get_next_market_open_hours()
@@ -89,6 +96,7 @@ while True:
         high_52_weeks = float(rs.stocks.get_fundamentals(inputSymbols=ticker,info='high_52_weeks')[0])
         # if <10% of portfolio is cash, do nothing
         if uninvested_cash/total_portfolio_value < cash_allocation:
+            logger.info('Do nothing. Less than 10% of portfolio in cash.')
             pass
         else:
             # if day high within 99% of 52 week high then place buy order
@@ -97,7 +105,7 @@ while True:
                                                         amountInDollars=uninvested_cash,
                                                         timeInForce='gfd',
                                                         extendedHours=False)
-                logger.info('submit buy order. ticker: {} amount: {}'.format(ticker, uninvested_cash))
+                logger.info('Submit buy order. Ticker: {} Amount: {}'.format(ticker, uninvested_cash))
 
             # build current portfolio holdings
             holdings = rs.account.build_holdings()
@@ -110,13 +118,13 @@ while True:
                                           timeInForce='gtc',
                                           extendedHours=False)
 
-            logger.info('submit trailing stop sell order. ticker: {} type: {} amount: {}'.format(
+            logger.info('Submit trailing stop sell order. Ticker: {} Type: {} Amount: {}'.format(
                 ticker, trail_stop_loss_type, trail_stop_loss_amount))
         # delay to prevent overwhelming Robinhood API
         sleep(15)
 
         ### get new current time
-        current_time = datetime.now(timezone.utc).isoformat()
+        current_time = parser.parse(datetime.now(timezone.utc).isoformat())
         pass
 
     # logout while market closed
@@ -124,4 +132,5 @@ while True:
 
     # seconds until next market open
     wait_time = max(seconds_until_market_open(market_opens),0)
+    logger.info('Market closed. Waiting {} until next market open.'.format(timedelta(seconds=wait_time)))
     sleep(wait_time)
