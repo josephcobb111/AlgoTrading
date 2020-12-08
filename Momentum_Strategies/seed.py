@@ -33,7 +33,8 @@ def get_next_market_open_hours(market='XNYS'):
     """Get next market open hours. Default market is NYSE for US market hours."""
     today_market_open_dict = rs.markets.get_market_today_hours(market=market)
     current_time = parser.parse(datetime.now(timezone.utc).isoformat())
-    if today_market_open_dict['is_open'] and current_time < parser.parse(today_market_open_dict['opens_at']):
+    if today_market_open_dict['is_open'] and current_time < parser.parse(today_market_open_dict['closes_at']):
+        print('today open')
         market_opens = parser.parse(today_market_open_dict['opens_at'])
         market_closes = parser.parse(today_market_open_dict['closes_at'])
     else:
@@ -41,6 +42,7 @@ def get_next_market_open_hours(market='XNYS'):
         market_opens = parser.parse(next_market_open_dict['opens_at'])
         market_closes = parser.parse(next_market_open_dict['closes_at'])
     return market_opens, market_closes
+
 
 def seconds_until_market_open(market_opens):
     """Get seconds until market opens."""
