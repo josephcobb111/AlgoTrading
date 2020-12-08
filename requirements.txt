@@ -11,3 +11,4 @@ iexfinance==0.4.3
 alpha-vantage==2.2.0
 pyfolio==0.9.2
 zipline==1.4.1
+alpaca-trade-api==0.51.0
