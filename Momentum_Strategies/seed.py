@@ -155,7 +155,7 @@ while True:
                 quantity = float(holdings[symbol]['quantity'])
                 rs.orders.order_sell_fractional_by_quantity(symbol=symbol,
                                                             quantity=quantity,
-                                                            timeInForce='gtc',
+                                                            timeInForce='gfd',
                                                             extendedHours=False)
                 logger.info('Submit take profit sell order. Ticker: {} Percent Gain: {}'.format(
                 symbol, percentchange))
@@ -164,7 +164,7 @@ while True:
                 quantity = float(holdings[symbol]['quantity'])
                 rs.orders.order_sell_fractional_by_quantity(symbol=symbol,
                                                             quantity=quantity,
-                                                            timeInForce='gtc',
+                                                            timeInForce='gfd',
                                                             extendedHours=False)
                 logger.info('Submit stop loss profit sell order. Ticker: {} Percent Loss: {}'.format(
                 symbol, percentchange))
