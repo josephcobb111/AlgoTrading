@@ -121,7 +121,7 @@ while True:
         except:
             logger.info('Failed to get total portfolio value.')
         try:
-            uninvested_cash = float(rs.profiles.load_account_profile(info='cash'))
+            uninvested_cash = float(rs.profiles.load_account_profile(info='buying_power'))
         except:
             logger.info('Failed to get uninvested cash.')
         # get latest price and 52 week high prices
