@@ -135,7 +135,7 @@ while True:
             logger.info('Failed to get 52 week high.')
         # if <10% of portfolio is cash, do nothing
         if uninvested_cash/total_portfolio_value < cash_allocation:
-            logger.info('Do nothing. Less than 10% of portfolio in cash.')
+            logger.info('Do not open new positions. Less than 10% of portfolio in cash.')
             pass
         else:
             # if day high within 99% of 52 week high then place buy order
