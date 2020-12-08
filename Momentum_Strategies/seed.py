@@ -117,11 +117,11 @@ while True:
     while (current_time >= market_opens) & (current_time < market_closes):
         # get current portfolio and uninvested cash values
         try:
-            total_portfolio_value = float(rs.profiles.load_portfolio_profile()['equity'])
+            total_portfolio_value = float(rs.profiles.load_portfolio_profile(info='equity'))
         except:
             logger.info('Failed to get total portfolio value.')
         try:
-            uninvested_cash = float(rs.account.load_phoenix_account()['uninvested_cash']['amount'])
+            uninvested_cash = float(rs.profiles.load_account_profile(info='cash'))
         except:
             logger.info('Failed to get uninvested cash.')
         # get latest price and 52 week high prices
@@ -135,7 +135,7 @@ while True:
             logger.info('Failed to get 52 week high.')
         # if <10% of portfolio is cash, do nothing
         if uninvested_cash/total_portfolio_value < cash_allocation:
-            logger.info('Do nothing. Less than 10% of portfolio in cash.')
+            logger.info('Do not open new positions. Less than 10% of portfolio in cash.')
             pass
         else:
             # if day high within 99% of 52 week high then place buy order
