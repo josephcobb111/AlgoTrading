@@ -169,8 +169,8 @@ while True:
                 logger.info('Submit stop loss profit sell order. Ticker: {} Percent Loss: {}'.format(
                 symbol, percentchange))
         # delay to prevent overwhelming Robinhood API
-        logger.info('Sleep for 15 seconds.')
-        sleep(15)
+        logger.info('Sleep for 60 seconds.')
+        sleep(60)
 
         ### get new current time
         current_time = parser.parse(datetime.now(timezone.utc).isoformat())
