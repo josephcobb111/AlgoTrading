@@ -152,7 +152,7 @@ while True:
             percentchange = float(holdings[symbol]['percent_change'])
             # take profit
             if percentchange >= take_profit:
-                quantity = float(holdings[symbol]['quantity'][0])
+                quantity = float(holdings[symbol]['quantity'])
                 rs.orders.order_sell_fractional_by_quantity(symbol=symbol,
                                                             quantity=quantity,
                                                             timeInForce='gtc',
@@ -161,7 +161,7 @@ while True:
                 symbol, percentchange))
             # stop loss
             elif percentchange <= stop_loss:
-                quantity = float(holdings[symbol]['quantity'][0])
+                quantity = float(holdings[symbol]['quantity'])
                 rs.orders.order_sell_fractional_by_quantity(symbol=symbol,
                                                             quantity=quantity,
                                                             timeInForce='gtc',
