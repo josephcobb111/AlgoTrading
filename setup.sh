@@ -1,3 +1,3 @@
 conda env create -f environment.yml
-source activate algotrading
+conda activate algotrading
 ipython kernel install --user --name algotrading
