@@ -34,7 +34,6 @@ def get_next_market_open_hours(market='XNYS'):
     today_market_open_dict = rs.markets.get_market_today_hours(market=market)
     current_time = parser.parse(datetime.now(timezone.utc).isoformat())
     if today_market_open_dict['is_open'] and current_time < parser.parse(today_market_open_dict['closes_at']):
-        print('today open')
         market_opens = parser.parse(today_market_open_dict['opens_at'])
         market_closes = parser.parse(today_market_open_dict['closes_at'])
     else:
@@ -170,6 +169,7 @@ while True:
                 logger.info('Submit stop loss profit sell order. Ticker: {} Percent Loss: {}'.format(
                 symbol, percentchange))
         # delay to prevent overwhelming Robinhood API
+        logger.info('Sleep for 15 seconds.')
         sleep(15)
 
         ### get new current time
