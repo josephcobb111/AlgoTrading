@@ -109,12 +109,13 @@ while True:
         logger.info('Get market times failed.')
     current_time = parser.parse(datetime.now(timezone.utc).isoformat())
 
-    day_trades = check_for_day_trades()
-    if day_trades < 0 or day_trades > 2:
-        logger.info("WARNING: Must have less at least 1 day trades available to trade.")
-        break
     # while market is open, execute trading strategy
     while (current_time >= market_opens) & (current_time < market_closes):
+        # check for day trades
+        day_trades = check_for_day_trades()
+        if day_trades < 0 or day_trades > 2:
+            logger.info("WARNING: Must have at least 1 day trades available to trade.")
+            break
         # get current portfolio and uninvested cash values
         try:
             total_portfolio_value = float(rs.profiles.load_portfolio_profile(info='equity'))
