@@ -91,6 +91,7 @@ take_profit = 1.5 # as a percentage
 stop_loss = -0.5 # as a percentage
 cash_allocation = 0.1
 proximity_to_new_high_52_weeks = 0.999 # right at 52 week high
+sell_today = True # toggle for day trading
 #######################
 
 while True:
@@ -115,7 +116,7 @@ while True:
         day_trades = check_for_day_trades()
         if day_trades < 0 or day_trades > 2:
             logger.info("WARNING: Must have at least 1 day trades available to trade.")
-            break
+            sell_today = False
         # get current portfolio and uninvested cash values
         try:
             total_portfolio_value = float(rs.profiles.load_portfolio_profile(info='equity'))
@@ -146,29 +147,32 @@ while True:
                                                         timeInForce='gfd',
                                                         extendedHours=False)
                 logger.info('Submit buy order. Ticker: {} Amount: {}'.format(ticker, uninvested_cash))
-
-        # build current portfolio holdings
-        holdings = rs.account.build_holdings()
-        for symbol in holdings.keys():
-            percentchange = float(holdings[symbol]['percent_change'])
-            # take profit
-            if percentchange >= take_profit:
-                quantity = float(holdings[symbol]['quantity'])
-                rs.orders.order_sell_fractional_by_quantity(symbol=symbol,
-                                                            quantity=quantity,
-                                                            timeInForce='gfd',
-                                                            extendedHours=False)
-                logger.info('Submit take profit sell order. Ticker: {} Percent Gain: {}'.format(
-                symbol, percentchange))
-            # stop loss
-            elif percentchange <= stop_loss:
-                quantity = float(holdings[symbol]['quantity'])
-                rs.orders.order_sell_fractional_by_quantity(symbol=symbol,
-                                                            quantity=quantity,
-                                                            timeInForce='gfd',
-                                                            extendedHours=False)
-                logger.info('Submit stop loss profit sell order. Ticker: {} Percent Loss: {}'.format(
-                symbol, percentchange))
+        if sell_today:
+            # build current portfolio holdings
+            holdings = rs.account.build_holdings()
+            for symbol in holdings.keys():
+                percentchange = float(holdings[symbol]['percent_change'])
+                # take profit
+                if percentchange >= take_profit:
+                    quantity = float(holdings[symbol]['quantity'])
+                    rs.orders.order_sell_fractional_by_quantity(symbol=symbol,
+                                                                quantity=quantity,
+                                                                timeInForce='gfd',
+                                                                extendedHours=False)
+                    logger.info('Submit take profit sell order. Ticker: {} Percent Gain: {}'.format(
+                    symbol, percentchange))
+                # stop loss
+                elif percentchange <= stop_loss:
+                    quantity = float(holdings[symbol]['quantity'])
+                    rs.orders.order_sell_fractional_by_quantity(symbol=symbol,
+                                                                quantity=quantity,
+                                                                timeInForce='gfd',
+                                                                extendedHours=False)
+                    logger.info('Submit stop loss profit sell order. Ticker: {} Percent Loss: {}'.format(
+                    symbol, percentchange))
+        else:
+            logger.info('Cannot close positions without day trades available.')
+            sleep(1200)
         # delay to prevent overwhelming Robinhood API
         logger.info('Sleep for 60 seconds.')
         sleep(60)
