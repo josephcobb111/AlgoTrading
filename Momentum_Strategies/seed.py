@@ -12,6 +12,7 @@
 ## Implement logic to assess multiple tickers for trades
 ## Implement logic to limit open positions per ticker to 1
 ## Implement logic to limit position size
+## Implement logic to sell winners same day (hold losers at least 1 day)
 
 import os
 import pandas as pd
@@ -87,10 +88,10 @@ logger.addHandler(ch)
 
 ### some parameters ###
 ticker = 'TTD'
-take_profit = 1.5 # as a percentage
-stop_loss = -0.5 # as a percentage
+take_profit = 3 # as a percentage
+stop_loss = -2 # as a percentage
 cash_allocation = 0.1
-proximity_to_new_high_52_weeks = 0.999 # right at 52 week high
+proximity_to_new_high_52_weeks = 0.99 # right at 52 week high
 sell_today = True # toggle for day trading
 #######################
 
