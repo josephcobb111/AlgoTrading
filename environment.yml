@@ -14,3 +14,5 @@ dependencies:
     - matplotlib==3.3.3
     - yfinance==0.1.55
     - alpaca-trade-api==0.51.0
+    - sklearn
+    - seaborn
