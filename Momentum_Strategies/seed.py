@@ -88,8 +88,8 @@ logger.addHandler(ch)
 
 ### some parameters ###
 ticker = 'TTD'
-take_profit = 3 # as a percentage
-stop_loss = -2 # as a percentage
+take_profit = 2.5 # as a percentage
+stop_loss = -5 # as a percentage
 cash_allocation = 0.1
 proximity_to_new_high_52_weeks = 0.99 # right at 52 week high
 sell_today = True # toggle for day trading
