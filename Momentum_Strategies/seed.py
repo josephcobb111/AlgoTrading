@@ -187,5 +187,7 @@ while True:
 
     # seconds until next market open
     wait_time = max(seconds_until_market_open(market_opens),0)
+    # require login at least once per day to avoid error
+    wait_time = wait_time/4
     logger.info('Market closed. Waiting {} until next market open.'.format(timedelta(seconds=wait_time)))
     sleep(wait_time)
