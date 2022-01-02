@@ -1,0 +1,2 @@
+include versioneer.py
+global-include *.csv
