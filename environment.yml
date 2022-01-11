@@ -16,7 +16,7 @@ dependencies:
     - pytest==5.4.3
     - pytest-cov==2.10.1
     - pytest-xdist==1.33.0
-    - robin_stocks==1.5.3
+    - robin_stocks==2.1.0
     - seaborn
     - sklearn
     - yfinance==0.1.55

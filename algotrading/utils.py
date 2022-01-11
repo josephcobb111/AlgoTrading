@@ -6,7 +6,7 @@ import requests
 
 import numpy as np
 import pandas as pd
-import robin_stocks as rs
+import robin_stocks.robinhood as rs
 
 from datetime import datetime, timezone, timedelta
 from dateutil import parser
