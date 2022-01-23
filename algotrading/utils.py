@@ -1,16 +1,11 @@
-import json
-import logging
 import os
 import pyotp
 import requests
 
-import numpy as np
 import pandas as pd
 import robin_stocks.robinhood as rs
 
-from datetime import datetime, timezone, timedelta
-from dateutil import parser
-from time import sleep
+from datetime import datetime, timedelta
 from urllib.parse import unquote
 
 
@@ -36,7 +31,7 @@ def robinhood_login(
 
 def find_nearest_weekday_date(days_until_expiration_range, weekday_num):
     """
-    
+
     weekday_num : int
         Integer value corresponding to weekday;
             - Monday: 1
@@ -52,7 +47,7 @@ def find_nearest_weekday_date(days_until_expiration_range, weekday_num):
     start = now + timedelta(days_until_expiration_range[0])
     end = now + timedelta(days_until_expiration_range[1])
 
-    dates_generated = [start + timedelta(days=x) for x in range(0, (end-start).days)]
+    dates_generated = [start + timedelta(days=x) for x in range(0, (end - start).days)]
 
     weekday_dates = []
     for _date in dates_generated:
@@ -104,6 +99,7 @@ def get_implied_volatility_data():
     for _value in ['optionsImpliedVolatilityRank1y', 'optionsImpliedVolatilityPercentile1y']:
         _min = output[_value].min() >= 0
         _max = output[_value].max() <= 1
-        assert _min == _max == True, '{} not bounded by [0,1]'.format(_value)
+        assert _min, '{} not bounded by [0,1]'.format(_value)
+        assert _max, '{} not bounded by [0,1]'.format(_value)
 
     return output
