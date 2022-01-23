@@ -34,6 +34,36 @@ def robinhood_login(
     )
 
 
+def find_nearest_weekday_date(days_until_expiration_range, weekday_num):
+    """
+    
+    weekday_num : int
+        Integer value corresponding to weekday;
+            - Monday: 1
+            - Tuesday: 2
+            - Wednesday: 3
+            - Thursday: 4
+            - Friday: 5
+            - Saturday: 6
+            - Sunday: 7
+    """
+    now = datetime.now()
+
+    start = now + timedelta(days_until_expiration_range[0])
+    end = now + timedelta(days_until_expiration_range[1])
+
+    dates_generated = [start + timedelta(days=x) for x in range(0, (end-start).days)]
+
+    weekday_dates = []
+    for _date in dates_generated:
+        if _date.weekday() == weekday_num:
+            weekday_dates.append(_date)
+
+    nearest_weekday_expiration = min(weekday_dates).strftime("%Y-%m-%d")
+
+    return nearest_weekday_expiration
+
+
 def get_implied_volatility_data():
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:86.0) Gecko/20100101 Firefox/86.0"
