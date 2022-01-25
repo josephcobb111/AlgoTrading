@@ -129,6 +129,9 @@ def main():
                 _short_theta = short_call_df['theta'].astype(float).values[0]
                 _short_vega = short_call_df['vega'].astype(float).values[0]
 
+                # to do: cast expiration_option_chain_data columns to float type
+                expiration_option_chain_data['strike_price'] = expiration_option_chain_data['strike_price'].astype(float)
+
                 long_call_df = expiration_option_chain_data.loc[
                     expiration_option_chain_data['strike_price'].astype(float) > _short_strike_price
                 ].sort_values(by='strike_price', ascending=True).head(1)
@@ -239,7 +242,7 @@ def main():
             if updated_call_credit_spread_open_order_receipt['state'] == 'filled':
                 trade_filled = True
                 check_for_trade_execution = False
-            elif updated_call_credit_spread_open_order_receipt['state'] == 'canceled':
+            elif updated_call_credit_spread_open_order_receipt['state'] == 'cancelled':
                 trade_filled = False
                 check_for_trade_execution = False
             else:
