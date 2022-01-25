@@ -9,11 +9,18 @@ from algotrading.utils import robinhood_login, find_nearest_weekday_date, get_im
 
 
 # set parameters of trading strategy
+iv_rank_min = 0.5
+iv_percentile_min = 0.5
+total_option_volume_min = 50000
 target_delta = .30
 days_until_expiration_range = [30, 45]
+delta_tolerance =  0.025
+option_volume_min = 10
+option_open_interest_min = 100
 max_strike_width = 1
 min_percent_return = 0.3
 profit_target_percent = 0.5
+trade_logging_file_path = '../trade_histories/call_credit_spread.csv'
 
 
 def main():
@@ -28,9 +35,9 @@ def main():
 
     # filter to tickers with high IV and volume
     ticker_list = iv_data.loc[
-        (iv_data.optionsImpliedVolatilityRank1y > 0.50) &
-        (iv_data.optionsImpliedVolatilityPercentile1y > 0.50) &
-        (iv_data.optionsTotalVolume > 50000)
+        (iv_data.optionsImpliedVolatilityRank1y > iv_rank_min) &
+        (iv_data.optionsImpliedVolatilityPercentile1y > iv_percentile_min) &
+        (iv_data.optionsTotalVolume > total_option_volume_min)
     ]['symbol'].tolist()
 
     # login to Robinhood
@@ -95,9 +102,9 @@ def main():
 
         if not expiration_option_chain_data.empty:
             short_call_df = expiration_option_chain_data.loc[
-                (abs(expiration_option_chain_data.delta.astype(float) - target_delta) <= 0.025) &
-                (expiration_option_chain_data.volume.astype(float) >= 10) &
-                (expiration_option_chain_data.open_interest.astype(float) >= 100)
+                (abs(expiration_option_chain_data.delta.astype(float) - target_delta) <= delta_tolerance) &
+                (expiration_option_chain_data.volume.astype(float) >= option_volume_min) &
+                (expiration_option_chain_data.open_interest.astype(float) >= option_open_interest_min)
             ].copy()
 
             if short_call_df.shape[0] > 0:
@@ -215,7 +222,7 @@ def main():
             symbol=call_credit_spread_trade['symbol'],
             quantity=1,
             spread=call_credit_spread_open_order_list,
-            timeInForce='gtc',
+            timeInForce='gfd',
         )
 
         # check order status
@@ -267,7 +274,7 @@ def main():
                 order_id=call_credit_spread_close_order_receipt['id'],
             )
 
-            call_credit_spread_logging = pd.read_csv('../trade_histories/call_credit_spread.csv')
+            call_credit_spread_logging = pd.read_csv(trade_logging_file_path)
             call_credit_spread_logging_new_trade = pd.DataFrame(call_credit_spread_trade).T.round(6)
 
             for _col in call_credit_spread_logging_new_trade.columns:
@@ -282,7 +289,7 @@ def main():
 
             call_credit_spread_logging = pd.concat([call_credit_spread_logging, call_credit_spread_logging_new_trade])
             call_credit_spread_logging.drop_duplicates(inplace=True)
-            call_credit_spread_logging.to_csv('../trade_histories/call_credit_spread.csv', index=False)
+            call_credit_spread_logging.to_csv(trade_logging_file_path, index=False)
 
     rs.logout()
 
