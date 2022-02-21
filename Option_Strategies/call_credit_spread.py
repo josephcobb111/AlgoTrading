@@ -324,8 +324,13 @@ def main():
         current_time = parser.parse(datetime.now(timezone.utc).isoformat())
         pass
 
-    # logout while market closed
+    # logout while not trading
     rs.logout()
+
+    # pause trading if max daily open positions are reached
+    if daily_open_positions < max_daily_open_positions:
+        logger.info('Max daily open positions reached. Sleep for {}.'.format(timedelta(seconds=23400)))
+        sleep(23400)
 
     # seconds until next market open
     wait_time = max(seconds_until_market_open(market_opens), 0)
