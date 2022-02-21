@@ -1,11 +1,14 @@
+import logging
 import os
 import pyotp
 import requests
 
+import numpy as np
 import pandas as pd
 import robin_stocks.robinhood as rs
 
 from datetime import datetime, timedelta, timezone
+from dateutil import parser
 from urllib.parse import unquote
 
 
@@ -127,9 +130,48 @@ def get_recent_open_option_tickers(option_type, day_lag):
         row['option_type'] = rs.options.get_option_instrument_data_by_id(row['option_id'])['type']
 
     recent_option_positions = recent_option_positions.loc[recent_option_positions.option_type == option_type]
-    
+
     recent_open_tickers = list(
         set(open_option_positions['chain_symbol']) & set(recent_option_positions['chain_symbol']))
-    
+
     return recent_open_tickers
 
+
+def get_next_market_open_hours(market='XNYS'):
+    """Get next market open hours. Default market is NYSE for US market hours."""
+    today_market_open_dict = rs.markets.get_market_today_hours(market=market)
+    current_time = parser.parse(datetime.now(timezone.utc).isoformat())
+    if today_market_open_dict['is_open'] and current_time < parser.parse(today_market_open_dict['closes_at']):
+        market_opens = parser.parse(today_market_open_dict['opens_at'])
+        market_closes = parser.parse(today_market_open_dict['closes_at'])
+    else:
+        next_market_open_dict = rs.markets.get_market_next_open_hours(market=market)
+        market_opens = parser.parse(next_market_open_dict['opens_at'])
+        market_closes = parser.parse(next_market_open_dict['closes_at'])
+    return market_opens, market_closes
+
+
+def seconds_until_market_open(market_opens):
+    """Get seconds until market opens."""
+    current_time = parser.parse(datetime.now(timezone.utc).isoformat())
+    return np.floor((market_opens - current_time).total_seconds())
+
+
+def create_logger(filename, logname):
+    # create logger'
+    logger = logging.getLogger(filename)
+    logger.setLevel(logging.DEBUG)
+    # create file handler which logs even debug messages
+    fh = logging.FileHandler(logname)
+    fh.setLevel(logging.DEBUG)
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.ERROR)
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+    # add the handlers to the logger
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+    return logger
