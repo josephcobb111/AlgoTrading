@@ -5,7 +5,7 @@ import requests
 import pandas as pd
 import robin_stocks.robinhood as rs
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from urllib.parse import unquote
 
 
@@ -103,3 +103,33 @@ def get_implied_volatility_data():
         assert _max, '{} not bounded by [0,1]'.format(_value)
 
     return output
+
+
+def get_recent_open_option_tickers(option_type, day_lag):
+    open_option_positions = pd.DataFrame(rs.get_open_option_positions())
+
+    open_option_positions['option_type'] = 'Unknown'
+
+    for i, row in open_option_positions.iterrows():
+        row['option_type'] = rs.options.get_option_instrument_data_by_id(row['option_id'])['type']
+
+    open_option_positions = open_option_positions.loc[open_option_positions.option_type == option_type]
+
+    all_option_positions = pd.DataFrame(rs.get_all_option_positions())
+
+    recent_option_positions = all_option_positions.loc[
+        pd.to_datetime(all_option_positions.updated_at) >=
+        pd.to_datetime(datetime.now(tz=timezone.utc) - timedelta(days=day_lag))].copy()
+
+    recent_option_positions['option_type'] = 'Unknown'
+
+    for i, row in recent_option_positions.iterrows():
+        row['option_type'] = rs.options.get_option_instrument_data_by_id(row['option_id'])['type']
+
+    recent_option_positions = recent_option_positions.loc[recent_option_positions.option_type == option_type]
+    
+    recent_open_tickers = list(
+        set(open_option_positions['chain_symbol']) & set(recent_option_positions['chain_symbol']))
+    
+    return recent_open_tickers
+

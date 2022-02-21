@@ -1,14 +1,18 @@
 import numpy as np
 import pandas as pd
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from time import sleep
 
 import robin_stocks.robinhood as rs
-from algotrading.utils import robinhood_login, find_nearest_weekday_date, get_implied_volatility_data
+from algotrading.utils import (robinhood_login, find_nearest_weekday_date, get_implied_volatility_data,
+                               get_recent_open_option_tickers)
 
 
 # set parameters of trading strategy
+weekday_num = 4
+option_type = 'call'
+day_lag = 7
 iv_rank_min = 0.5
 iv_percentile_min = 0.5
 total_option_volume_min = 50000
@@ -24,10 +28,13 @@ trade_logging_file_path = '../trade_histories/call_credit_spread.csv'
 
 
 def main():
+    # login to Robinhood
+    robinhood_login()
+
     # get nearest Friday expiration
     nearest_friday_expiration = find_nearest_weekday_date(
         days_until_expiration_range=days_until_expiration_range,
-        weekday_num=4,
+        weekday_num=weekday_num,
     )
 
     # get implied volatility data
@@ -40,16 +47,13 @@ def main():
         (iv_data.optionsTotalVolume > total_option_volume_min)
     ]['symbol'].tolist()
 
-    # login to Robinhood
-    robinhood_login()
-
-    # get open positions
-    open_option_positions = rs.get_open_option_positions()
+    # get recent open positions
+    remove_tickers = get_recent_open_option_tickers(option_type, day_lag)
 
     # remove tickers of positions from list
-    for _pos in open_option_positions:
-        if _pos['chain_symbol'] in ticker_list:
-            ticker_list.remove(_pos['chain_symbol'])
+    for _ticker in remove_tickers:
+        if _ticker in ticker_list:
+            ticker_list.remove(_ticker)
 
     # create call credit spread trades dataframe
     call_credit_spread_trades = pd.DataFrame(
@@ -93,12 +97,15 @@ def main():
 
     # sort through each ticker looking for possible trades
     for _ticker in ticker_list:
-        expiration_option_chain_data = pd.DataFrame(
-            rs.options.find_options_by_expiration(
-                inputSymbols=_ticker,
-                expirationDate=nearest_friday_expiration,
-                optionType='call',)
-        )
+        try:
+            expiration_option_chain_data = pd.DataFrame(
+                rs.options.find_options_by_expiration(
+                    inputSymbols=_ticker,
+                    expirationDate=nearest_friday_expiration,
+                    optionType='call',)
+            )
+        except TypeError:
+            expiration_option_chain_data = pd.DataFrame()
 
         if not expiration_option_chain_data.empty:
             short_call_df = expiration_option_chain_data.loc[
@@ -133,7 +140,7 @@ def main():
                 expiration_option_chain_data['strike_price'] = expiration_option_chain_data['strike_price'].astype(float)
 
                 long_call_df = expiration_option_chain_data.loc[
-                    expiration_option_chain_data['strike_price'].astype(float) > _short_strike_price
+                    expiration_option_chain_data['strike_price'] > _short_strike_price
                 ].sort_values(by='strike_price', ascending=True).head(1)
 
                 _long_strike_price = long_call_df['strike_price'].astype(float).values[0]
