@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 
 from datetime import datetime, timedelta, timezone
@@ -21,7 +20,7 @@ iv_percentile_min = 0.5
 total_option_volume_min = 50000
 target_delta = .30
 days_until_expiration_range = [30, 45]
-delta_tolerance =  0.025
+delta_tolerance = 0.025
 option_volume_min = 10
 option_open_interest_min = 100
 max_strike_width = 1
@@ -131,7 +130,7 @@ def main():
                     if short_call_df.shape[0] > 1:
                         short_call_df.sort_values(by='volume', ascending=False, inplace=True)
                         short_call_df.reset_index(drop=True, inplace=True)
-                        short_call_df = short_call_df.loc[short_call_df.index==0]
+                        short_call_df = short_call_df.loc[short_call_df.index == 0]
 
                     _symbol = short_call_df['symbol'].astype(str).values[0]
                     _type = 'call credit spread'
@@ -192,7 +191,8 @@ def main():
                         _short_gamma,
                         _short_rho,
                         _short_theta,
-                        _short_vega,_long_strike_price,
+                        _short_vega,
+                        _long_strike_price,
                         _long_mark_price,
                         _long_ask_price,
                         _long_bid_price,
@@ -231,12 +231,12 @@ def main():
                  'strike': call_credit_spread_trade['short_strike_price'],
                  'optionType': 'call',
                  'effect': 'open',
-                 'action': 'sell',},
+                 'action': 'sell', },
                 {'expirationDate': call_credit_spread_trade['expiration_date'],
                  'strike': call_credit_spread_trade['long_strike_price'],
                  'optionType': 'call',
                  'effect': 'open',
-                 'action': 'buy',},
+                 'action': 'buy', },
             ]
 
             # send order to Robinhood
@@ -277,12 +277,12 @@ def main():
                          'strike': call_credit_spread_trade['short_strike_price'],
                          'optionType': 'call',
                          'effect': 'close',
-                         'action': 'buy',},
+                         'action': 'buy', },
                         {'expirationDate': call_credit_spread_trade['expiration_date'],
                          'strike': call_credit_spread_trade['long_strike_price'],
                          'optionType': 'call',
                          'effect': 'close',
-                         'action': 'sell',},
+                         'action': 'sell', },
                     ]
 
                     call_credit_spread_close_order_receipt = rs.order_option_debit_spread(
@@ -292,10 +292,6 @@ def main():
                         spread=call_credit_spread_close_order_list,
                         timeInForce='gtc',
                     )
-
-                updated_call_credit_spread_close_order_receipt = rs.get_option_order_info(
-                    order_id=call_credit_spread_close_order_receipt['id'],
-                )
 
                 call_credit_spread_logging = pd.read_csv(trade_logging_file_path)
                 call_credit_spread_logging_new_trade = pd.DataFrame(call_credit_spread_trade).T.round(6)
@@ -320,7 +316,7 @@ def main():
         logger.info('Sleep for 300 seconds.')
         sleep(300)
 
-        ### get new current time
+        # get new current time
         current_time = parser.parse(datetime.now(timezone.utc).isoformat())
         pass
 
@@ -337,7 +333,7 @@ def main():
     wait_time = max(seconds_until_market_open(market_opens), 0)
 
     # require login at least once per day to avoid error
-    wait_time = wait_time/4
+    wait_time = wait_time / 4
     logger.info('Market closed. Waiting {}.'.format(timedelta(seconds=wait_time)))
     sleep(wait_time)
 
